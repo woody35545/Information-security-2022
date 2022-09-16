@@ -118,39 +118,25 @@ def pass_ukw(input):
 # Wheel Rotation
 def rotate_wheels():
     # Implement Wheel Rotation Logics
-    rotate_right_wheel()
+    rotate_wheel()
     if SETTINGS['WHEELS'][1]['wire'][0] == SETTINGS['WHEELS'][1]['turn']:
-        rotate_middle_wheel()
+        rotate_wheel(opt='m')
     if SETTINGS['WHEELS'][0]['wire'][0] == SETTINGS['WHEELS'][0]['turn']:
-        rotate_left_wheel()
+        rotate_wheel(opt='l')
     pass
 
-def rotate_left_wheel():
+def rotate_wheel(opt = 'r'):
     global SETTINGS
-    debug_msg("LEFT WHEEL's wire= " + str(SETTINGS['WHEELS'][0]['wire']))
-    wire = str(SETTINGS['WHEELS'][0]['wire'])
-    rotated_wire = wire[1:len(wire)] + str(wire[0])
-    SETTINGS['WHEELS'][0]['wire'] = rotated_wire
-    #print(str(SETTINGS['WHEELS'][0]['wire']))
+    if opt == 'r':
+        wheel_idx = 2
+    elif opt == 'm':
+        wheel_idx = 1
+    elif opt == 'l':
+        wheel_idx = 0
+    wheel = SETTINGS['WHEELS'][wheel_idx]
+    wire = str(wheel['wire'])
+    SETTINGS['WHEELS'][wheel_idx]['wire'] = wire[1:len(wire)] + str(wire[0])
     return None
-
-def rotate_middle_wheel():
-    middle_wheel = SETTINGS['WHEELS'][1]
-    wire = str(middle_wheel['wire'])
-    debug_msg("MIDDLE WHEEL's wire= " + str(wire))
-    rotated_wire = wire[1:len(wire)] + str(wire[0])
-    SETTINGS['WHEELS'][1]['wire'] = rotated_wire
-    #print(str(SETTINGS['WHEELS'][1]['wire']))
-    return None
-
-def rotate_right_wheel():
-    debug_msg("RIGHT WHEEL's wire= " + str(SETTINGS['WHEELS'][2]['wire']))
-    wire = str(SETTINGS['WHEELS'][2]['wire'])
-    rotated_wire = wire[1:len(wire)] + str(wire[0])
-    SETTINGS['WHEELS'][2]['wire'] = rotated_wire
-    #print(str(SETTINGS['WHEELS'][2]['wire']))
-    return None
-
 
 # Enigma Exec Start
 """
