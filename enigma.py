@@ -1,25 +1,58 @@
 from copy import deepcopy
 from ctypes import ArgumentError
 
-DEBUG_MODE = False
-def debug_msg(msg):
-    if DEBUG_MODE:
-        print("[DEBUG] " + msg)
-
-# Enigma Components
-ETW = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 WHEELS = {
     "I": {
         "wire": "EKMFLGDQVZNTOWYHXUSPAIBRCJ",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 16
     },
     "II": {
         "wire": "AJDKSIRUXBLHWTMCQGZNPYFVOE",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 4
     },
     "III": {
         "wire": "BDFHJLCPRTXVZNYEIWGAKMUSQO",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "turn": 21
+    }
+}
+def get_mapping(wheel, reverse = False):
+    wire = wheel['wire']
+    res = {}
+    if reverse == False:
+        for i in range(len(wire)):
+            res[chr(ord('A') + i)] = wire[i]
+    elif reverse:
+        for i in range(len(wire)):
+            res[wire[i]] = chr(ord('A') + i)
+    return res
+
+
+def index_of(input_str, elemnt_to_find):
+    for i in range(len(input_str)):
+        if input_str[i] == elemnt_to_find:
+            return i
+
+# Enigma Components
+ETW =  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+WHEELS = {
+    "I": {
+        "wire": "EKMFLGDQVZNTOWYHXUSPAIBRCJ",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "turn": 16
+    },
+    "II": {
+        "wire": "AJDKSIRUXBLHWTMCQGZNPYFVOE",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "turn": 4
+    },
+    "III": {
+        "wire": "BDFHJLCPRTXVZNYEIWGAKMUSQO",
+        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 21
     }
 }
@@ -74,15 +107,16 @@ def pass_plugboard(input):
             return plug[1]
         elif str.endswith(plug, input):
             return plug[0]
-
     return input
 
 
 # ETW
-def pass_etw(input):
-    debug_msg(input)
-    debug_msg(f"[pass_etw] >> ord(input) - ord('A') = {ord(input) - ord('A')}")
-    debug_msg("[pass_etw] >> SETTINGS[\"ETW\"][ord(input) - ord('A')] = " + str(SETTINGS["ETW"][ord(input) - ord('A')]))
+def pass_etw(input, reverse=False):
+    if reverse:
+        match_loc = index_of(SETTINGS['WHEELS'][2]['state'], input)
+        return SETTINGS["ETW"][match_loc]
+
+
 
     return SETTINGS["ETW"][ord(input) - ord('A')]
 
@@ -92,25 +126,43 @@ def pass_wheels(input, reverse=False):
     # Implement Wheel Logics
     # Keep in mind that reflected signals pass wheels in reverse order
     encrypted = input
-    debug_msg("encrypted = " + str(input))
-    if reverse:
-        for wh in SETTINGS['WHEELS']:
-            #print(wh['wire'])
-            encrypted = wh['wire'][ord(wh['wire'][ord(encrypted) - ord('A')]) - ord('A')]
-            debug_msg("[pass_wheels] >> encrypted = wh['wire'][ord(wh['wire'][ord(encrypted) - ord('A')]) - ord('A')]: " + str(encrypted))
-    elif not reverse:
-        for i in range(0, len(SETTINGS['WHEELS'])):
 
-            encrypted = SETTINGS['WHEELS'][2-i]['wire'][ord(encrypted) - ord('A')]
-            debug_msg("[pass_wheels] >> encrypted = wh['wire'][ord(encrypted) - ord('A')] = " + str(encrypted))
+    for i in range(0, len(SETTINGS['WHEELS'])):
+        if reverse:
+            wheel = SETTINGS['WHEELS'][i]
+            cur_state = wheel['state']
+            if wheel == SETTINGS['WHEELS'][0]:
+                prev_state = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            else:
+                prev_state = SETTINGS['WHEELS'][i-1]['state']
+
+        elif not reverse:
+            wheel = SETTINGS['WHEELS'][2-i]
+            cur_state = wheel['state']
+            if wheel == SETTINGS['WHEELS'][(len(SETTINGS['WHEELS'])-1)]:
+                prev_state = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" # SETTING['ETW']['state']
+            else:
+                prev_state = SETTINGS['WHEELS'][2-i+1]['state']
+        temp = encrypted
+        wire = wheel['wire']
+
+        if reverse:
+            match_char = cur_state[index_of(prev_state, encrypted)]
+            mapping = get_mapping(wheel,reverse = True)
+
+            encrypted = mapping[match_char]
+
+        elif not reverse:
+            mapping = get_mapping(wheel)
+            match_char = cur_state[index_of(prev_state, encrypted)]
+            encrypted = mapping[match_char]
+
 
     return encrypted
 
 
 # UKW
 def pass_ukw(input):
-    debug_msg(f"[pass_ukw] >> ord(input) - ord('A') = {ord(input) - ord('A')}")
-    debug_msg("[pass_ukw] >> SETTINGS[\"UKW\"][ord(input) - ord('A')] = " + str(SETTINGS["UKW"][ord(input) - ord('A')]))
 
     return SETTINGS["UKW"][ord(input) - ord('A')]
 
@@ -119,9 +171,9 @@ def pass_ukw(input):
 def rotate_wheels():
     # Implement Wheel Rotation Logics
     rotate_wheel()
-    if SETTINGS['WHEELS'][1]['wire'][0] == SETTINGS['WHEELS'][1]['turn']:
+    if SETTINGS['WHEELS'][2]['state'][-1] == chr(ord('A') + SETTINGS['WHEELS'][2]['turn']):
         rotate_wheel(opt='m')
-    if SETTINGS['WHEELS'][0]['wire'][0] == SETTINGS['WHEELS'][0]['turn']:
+    if SETTINGS['WHEELS'][1]['state'][-1] == chr(ord('A') + SETTINGS['WHEELS'][1]['turn']):
         rotate_wheel(opt='l')
     pass
 
@@ -134,8 +186,8 @@ def rotate_wheel(opt = 'r'):
     elif opt == 'l':
         wheel_idx = 0
     wheel = SETTINGS['WHEELS'][wheel_idx]
-    wire = str(wheel['wire'])
-    SETTINGS['WHEELS'][wheel_idx]['wire'] = wire[1:len(wire)] + str(wire[0])
+    state = str(wheel['state'])
+    SETTINGS['WHEELS'][wheel_idx]['state'] = state[1:len(state)] + str(state[0])
     return None
 
 # Enigma Exec Start
@@ -148,26 +200,26 @@ plugboard_setup = input("Plugboard Setup: ")
 """
 
 
-plaintext = "AAA"
+plaintext = "A"*40
 ukw_select = "B"
 wheel_select = "III II I"
 wheel_pos_select = "A A A"
 plugboard_setup = "AA"
 apply_settings(ukw_select, wheel_select, wheel_pos_select, plugboard_setup)
-print(SETTINGS['WHEELS'])
+
+
 
 for ch in plaintext:
     rotate_wheels()
-
+    #print("\nRIGHT WHEEL = " + SETTINGS["WHEELS"][2]['state'])
     encoded_ch = ch
-
     encoded_ch = pass_plugboard(encoded_ch)
     encoded_ch = pass_etw(encoded_ch)
     encoded_ch = pass_wheels(encoded_ch)
     encoded_ch = pass_ukw(encoded_ch)
     encoded_ch = pass_wheels(encoded_ch, reverse=True)
+    encoded_ch = pass_etw(encoded_ch, reverse=True)
     encoded_ch = pass_plugboard(encoded_ch)
-    print("결과: " , end = " ")
     print(encoded_ch, end='')
 
-    print("")
+
