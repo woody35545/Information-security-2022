@@ -1,45 +1,20 @@
 from copy import deepcopy
 from ctypes import ArgumentError
 
-
-def get_mapping(wheel, reverse=False):
-    # wire에 구조에 따라 Input이 어떤값으로 치환되는지에 대한 Mapping 값을 반환해줌
-    # 파라미터 설정에 따라 정방향 또는 역방향 Mapping 값을 반환.
-    wire = wheel['wire']
-    res = {}
-    if reverse == False:
-        for i in range(len(wire)):
-            res[chr(ord('A') + i)] = wire[i]
-    elif reverse:
-        for i in range(len(wire)):
-            res[wire[i]] = chr(ord('A') + i)
-    return res
-
-
-def index_of(input_str, elemnt_to_find):
-    # 문자열에서 원하는 문자의 위치(index)를 찾아 반환해줌
-    for i in range(len(input_str)):
-        if input_str[i] == elemnt_to_find:
-            return i
-
-
 # Enigma Components
 ETW = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 WHEELS = {
     "I": {
         "wire": "EKMFLGDQVZNTOWYHXUSPAIBRCJ",
-        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 16
     },
     "II": {
         "wire": "AJDKSIRUXBLHWTMCQGZNPYFVOE",
-        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 4
     },
     "III": {
         "wire": "BDFHJLCPRTXVZNYEIWGAKMUSQO",
-        "state": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "turn": 21
     }
 }
@@ -93,13 +68,25 @@ def pass_plugboard(input):
             return plug[1]
         elif str.endswith(plug, input):
             return plug[0]
+
     return input
 
 
 # ETW
 def pass_etw(input, reverse=False):
     if reverse:
-        return SETTINGS["ETW"][index_of(SETTINGS['WHEELS'][2]['state'], input)]
+        diff = ord(input) - ord('A') - SETTINGS['WHEEL_POS'][2]
+        idx = ord(SETTINGS["ETW"][0]) - ord('A')+ diff
+        if idx < 0:
+            idx = idx + 26
+        return SETTINGS["ETW"][idx]
+
+        if ord(input)-ord('A') > SETTINGS['WHEEL_POS'][2]:
+            return SETTINGS["ETW"][ord(input) - ord('A') - SETTINGS['WHEEL_POS'][2]]
+        else:
+            return SETTINGS["ETW"][26 - SETTINGS['WHEEL_POS'][2]- (ord(input) - ord('A'))]
+
+            return SETTINGS["ETW"][ord(input) - SETTINGS['WHEEL_POS'][2]]
     return SETTINGS["ETW"][ord(input) - ord('A')]
 
 
@@ -107,38 +94,58 @@ def pass_etw(input, reverse=False):
 def pass_wheels(input, reverse=False):
     # Implement Wheel Logics
     # Keep in mind that reflected signals pass wheels in reverse order
-    encrypted = input
+    passed_result = input
+    #print("[pass_wheel] input: " + input)
+    if not reverse:
+        for i in range(0, len(SETTINGS['WHEELS'])):
+            wheel = SETTINGS['WHEELS'][(len(SETTINGS['WHEELS']) - 1)- i]
+            wheel_pos = SETTINGS['WHEEL_POS'][len(SETTINGS['WHEELS']) - 1 - i]
+            wire = wheel['wire']
 
-    for i in range(0, len(SETTINGS['WHEELS'])):
-        if reverse:
+            if len(SETTINGS['WHEELS']) - 1 - i == 2:
+                match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
+                #print("match location: " + str(match_location))
+
+            else:
+                previous_wheel_pos = SETTINGS['WHEEL_POS'][(len(SETTINGS['WHEELS']) - 1) - i + 1]
+                temp = (((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos )
+                if temp < 0:
+                    temp = (temp + 26)
+                match_location = temp % 26
+                #print("match location: " + str(match_location))
+
+
+            #print("passed_result = " + str(wire[match_location]))
+            passed_result = wire[match_location]
+
+
+    elif reverse:
+        for i in range(0, len(SETTINGS['WHEELS'])):
             wheel = SETTINGS['WHEELS'][i]
-            cur_state = wheel['state']
-            if wheel == SETTINGS['WHEELS'][0]:
-                prev_state = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            wheel_pos = SETTINGS['WHEEL_POS'][i]
+            wire = wheel['wire'] # Reverse Mapping 해야함
+
+            if i == 0:
+                match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
+                #print("match location: " + str(match_location))
+
             else:
-                prev_state = SETTINGS['WHEELS'][i - 1]['state']
+                previous_wheel_pos = SETTINGS['WHEEL_POS'][i-1]
+                temp = ((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos
+                if temp < 0:
+                    temp = temp + 26
+                match_location = temp % 26
+                #print("match location: " + str(match_location))
 
-        elif not reverse:
-            wheel = SETTINGS['WHEELS'][2 - i]
-            cur_state = wheel['state']
-            if wheel == SETTINGS['WHEELS'][(len(SETTINGS['WHEELS']) - 1)]:
-                prev_state = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"  # SETTING['ETW']['state']
-            else:
-                prev_state = SETTINGS['WHEELS'][2 - i + 1]['state']
-        temp = encrypted
+            # Reverse Mapping
+            for i in range(len(wire)):
+                if wire[i] == chr(match_location + ord("A")):
+                    passed_result = chr(i + ord("A"))
 
-        if reverse:
-            match_char = cur_state[index_of(prev_state, encrypted)]
-            mapping = get_mapping(wheel, reverse=True)
+            #print("passed_result = " + passed_result)
 
-            encrypted = mapping[match_char]
-
-        elif not reverse:
-            mapping = get_mapping(wheel)
-            match_char = cur_state[index_of(prev_state, encrypted)]
-            encrypted = mapping[match_char]
-
-    return encrypted
+    #print("[pass_wheel] output: "+ passed_result+"\n")
+    return passed_result
 
 
 # UKW
@@ -146,44 +153,25 @@ def pass_ukw(input):
     return SETTINGS["UKW"][ord(input) - ord('A')]
 
 
-def rotate_wheel(opt='r'):
-    # 단일 Wheel에 대한 Rotate
-    global SETTINGS
-    if opt == 'r':
-        idx = 2
-    elif opt == 'm':
-        idx = 1
-    elif opt == 'l':
-        idx = 0
-    wheel = SETTINGS['WHEELS'][idx]
-    state = str(wheel['state'])
-    SETTINGS['WHEELS'][idx]['state'] = state[1:len(state)] + str(state[0])
-    return None
-
-
 # Wheel Rotation
 def rotate_wheels():
-    # Implement Wheel Rotation Logics
-    # 각 Wheel이 Rotate 해야하는 지점에서 rotate_wheel을 호출하여 Rotate Logics를 구현함
+    global SETTINGS
 
-    rotate_wheel(opt='r')  # 가장 오른쪽 Wheel은 한글자를 Encrypt 하는 과정마다 조건없이 매번 돌아야함.
+    # Rotate Right Wheel
+    SETTINGS['WHEEL_POS'][2] = (SETTINGS['WHEEL_POS'][2] + 1) % 26
 
-    if SETTINGS['WHEELS'][2]['state'][-1] == chr(ord('A') + SETTINGS['WHEELS'][2]['turn']):
-        wheel = SETTINGS['WHEELS'][1]
-        state = str(wheel['state'])
-        SETTINGS['WHEELS'][1]['state'] = state[1:len(state)] + str(state[0])
+    if SETTINGS['WHEEL_POS'][2] - 1  == SETTINGS['WHEELS'][2]['turn'] :
+        # Rotate Middle Wheel
+        SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
 
-    if SETTINGS['WHEELS'][1]['state'][-1] == chr(ord('A') + SETTINGS['WHEELS'][1]['turn']):
-        wheel = SETTINGS['WHEELS'][0]
-        state = str(wheel['state'])
-        SETTINGS['WHEELS'][0]['state'] = state[1:len(state)] + str(state[0])
+    if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn'] :
+        # Rotate Left Wheel
+        SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
 
+    pass
 
-pass
-
-
-# Enigma Exec Start
 """
+# Enigma Exec Start
 plaintext = input("Plaintext to Encode: ")
 ukw_select = input("Set Reflector (A, B, C): ")
 wheel_select = input("Set Wheel Sequence L->R (I, II, III): ")
@@ -191,15 +179,20 @@ wheel_pos_select = input("Set Wheel Position L->R (A~Z): ")
 plugboard_setup = input("Plugboard Setup: ")
 """
 
-plaintext = "ABCDEFGHIJKLMN"
+# Enigma Exec Start
+plaintext = "A"*100
 ukw_select = "B"
 wheel_select = "III II I"
 wheel_pos_select = "A A A"
-plugboard_setup = "DA"
+plugboard_setup = "AA"
+
 apply_settings(ukw_select, wheel_select, wheel_pos_select, plugboard_setup)
 
+count = 0
 for ch in plaintext:
+
     rotate_wheels()
+
     encoded_ch = ch
     encoded_ch = pass_plugboard(encoded_ch)
     encoded_ch = pass_etw(encoded_ch)
@@ -207,5 +200,13 @@ for ch in plaintext:
     encoded_ch = pass_ukw(encoded_ch)
     encoded_ch = pass_wheels(encoded_ch, reverse=True)
     encoded_ch = pass_etw(encoded_ch, reverse=True)
+
     encoded_ch = pass_plugboard(encoded_ch)
-    print(encoded_ch, end='')
+    count = count + 1
+
+    if count % 5 == 0:
+        print(encoded_ch, end = " ")
+    else:
+        print(encoded_ch, end = "")
+    if count % 35 == 0:
+        print("")
