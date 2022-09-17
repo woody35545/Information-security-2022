@@ -112,7 +112,7 @@ def pass_wheels(input, reverse=False):
         for i in range(0, len(SETTINGS['WHEELS'])):
             wheel = SETTINGS['WHEELS'][i]
             wheel_pos = SETTINGS['WHEEL_POS'][i]
-            wire = wheel['wire'] # Reverse Mapping 해야함
+            wire = wheel['wire'] 
 
             if i == 0:
                 match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
