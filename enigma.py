@@ -81,12 +81,6 @@ def pass_etw(input, reverse=False):
             idx = idx + 26
         return SETTINGS["ETW"][idx]
 
-        if ord(input)-ord('A') > SETTINGS['WHEEL_POS'][2]:
-            return SETTINGS["ETW"][ord(input) - ord('A') - SETTINGS['WHEEL_POS'][2]]
-        else:
-            return SETTINGS["ETW"][26 - SETTINGS['WHEEL_POS'][2]- (ord(input) - ord('A'))]
-
-            return SETTINGS["ETW"][ord(input) - SETTINGS['WHEEL_POS'][2]]
     return SETTINGS["ETW"][ord(input) - ord('A')]
 
 
@@ -95,7 +89,6 @@ def pass_wheels(input, reverse=False):
     # Implement Wheel Logics
     # Keep in mind that reflected signals pass wheels in reverse order
     passed_result = input
-    #print("[pass_wheel] input: " + input)
     if not reverse:
         for i in range(0, len(SETTINGS['WHEELS'])):
             wheel = SETTINGS['WHEELS'][(len(SETTINGS['WHEELS']) - 1)- i]
@@ -104,7 +97,6 @@ def pass_wheels(input, reverse=False):
 
             if len(SETTINGS['WHEELS']) - 1 - i == 2:
                 match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
-                #print("match location: " + str(match_location))
 
             else:
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][(len(SETTINGS['WHEELS']) - 1) - i + 1]
@@ -112,10 +104,7 @@ def pass_wheels(input, reverse=False):
                 if temp < 0:
                     temp = (temp + 26)
                 match_location = temp % 26
-                #print("match location: " + str(match_location))
 
-
-            #print("passed_result = " + str(wire[match_location]))
             passed_result = wire[match_location]
 
 
@@ -127,7 +116,6 @@ def pass_wheels(input, reverse=False):
 
             if i == 0:
                 match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
-                #print("match location: " + str(match_location))
 
             else:
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][i-1]
@@ -135,16 +123,12 @@ def pass_wheels(input, reverse=False):
                 if temp < 0:
                     temp = temp + 26
                 match_location = temp % 26
-                #print("match location: " + str(match_location))
 
             # Reverse Mapping
             for i in range(len(wire)):
                 if wire[i] == chr(match_location + ord("A")):
                     passed_result = chr(i + ord("A"))
 
-            #print("passed_result = " + passed_result)
-
-    #print("[pass_wheel] output: "+ passed_result+"\n")
     return passed_result
 
 
@@ -163,10 +147,10 @@ def rotate_wheels():
     if SETTINGS['WHEEL_POS'][2] - 1  == SETTINGS['WHEELS'][2]['turn'] :
         # Rotate Middle Wheel
         SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
+        if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn']:
+            print("Rotate Left Wheel!")
+            SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
 
-    if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn'] :
-        # Rotate Left Wheel
-        SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
 
     pass
 
@@ -180,7 +164,7 @@ plugboard_setup = input("Plugboard Setup: ")
 """
 
 # Enigma Exec Start
-plaintext = "A"*100
+plaintext = "A"*200
 ukw_select = "B"
 wheel_select = "III II I"
 wheel_pos_select = "A A A"
