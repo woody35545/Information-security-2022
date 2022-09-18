@@ -158,37 +158,14 @@ def rotate_wheels():
 
     if SETTINGS['WHEEL_POS'][2] == SETTINGS['WHEELS'][2]['turn']:
         if SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
-            #print("\nrotate left wheel")
             rotate_wheel(opt='l')
         rotate_wheel(opt='m')
 
     elif SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
-        #print("\nrotate left wheel")
         rotate_wheel(opt='m')
         rotate_wheel(opt='l')
 
     rotate_wheel(opt='r')
-
-    ##
-    """
-    if SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
-        SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
-        SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
-        print("\n[cond_1] Left Wheel Pos: " + str(SETTINGS['WHEEL_POS'][0]))
-
-    else:
-        if SETTINGS['WHEEL_POS'][2] - 1 == SETTINGS['WHEELS'][2]['turn']:
-            # Rotate Middle Wheel
-            SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
-            if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn']:
-                # Rotate Left Wheel
-                # print("Rotate Left Wheel!")
-
-                SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
-                print("\n[cond_2] Left Wheel Pos: " + str(SETTINGS['WHEEL_POS'][0]))
-   
-   """
-
     pass
 
 """
