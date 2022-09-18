@@ -100,10 +100,10 @@ def pass_wheels(input, reverse=False):
 
             else:
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][(len(SETTINGS['WHEELS']) - 1) - i + 1]
-                temp = (((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos )
-                if temp < 0:
-                    temp = (temp + 26)
-                match_location = temp % 26
+                match_location = (((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos )
+                if match_location < 0:
+                    match_location = match_location + 26
+                match_location = match_location % 26
 
             passed_result = wire[match_location]
 
@@ -112,17 +112,17 @@ def pass_wheels(input, reverse=False):
         for i in range(0, len(SETTINGS['WHEELS'])):
             wheel = SETTINGS['WHEELS'][i]
             wheel_pos = SETTINGS['WHEEL_POS'][i]
-            wire = wheel['wire'] 
+            wire = wheel['wire'] # Reverse Mapping 해야함
 
             if i == 0:
                 match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
 
             else:
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][i-1]
-                temp = ((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos
-                if temp < 0:
-                    temp = temp + 26
-                match_location = temp % 26
+                match_location = ((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos
+                if match_location < 0:
+                    match_location = match_location + 26
+                match_location = match_location % 26
 
             # Reverse Mapping
             for i in range(len(wire)):
@@ -134,29 +134,66 @@ def pass_wheels(input, reverse=False):
 
 # UKW
 def pass_ukw(input):
-    return SETTINGS["UKW"][ord(input) - ord('A')]
+    match_location = ord(input)-ord('A') - SETTINGS['WHEEL_POS'][0]
+    if match_location < 0:
+        match_location = match_location + 26
+
+    return SETTINGS["UKW"][match_location]
+
+
+def rotate_wheel(opt='r'):
+    if opt == 'r':
+        idx = 2
+    elif opt == 'm':
+        idx = 1
+    elif opt == 'l':
+        idx = 0
+
+    SETTINGS['WHEEL_POS'][idx] = (SETTINGS['WHEEL_POS'][idx] + 1) % 26
 
 
 # Wheel Rotation
 def rotate_wheels():
     global SETTINGS
 
-    # Rotate Right Wheel
-    SETTINGS['WHEEL_POS'][2] = (SETTINGS['WHEEL_POS'][2] + 1) % 26
+    if SETTINGS['WHEEL_POS'][2] == SETTINGS['WHEELS'][2]['turn']:
+        if SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
+            #print("\nrotate left wheel")
+            rotate_wheel(opt='l')
+        rotate_wheel(opt='m')
 
-    if SETTINGS['WHEEL_POS'][2] - 1  == SETTINGS['WHEELS'][2]['turn'] :
-        # Rotate Middle Wheel
+    elif SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
+        #print("\nrotate left wheel")
+        rotate_wheel(opt='m')
+        rotate_wheel(opt='l')
+
+    rotate_wheel(opt='r')
+
+    ##
+    """
+    if SETTINGS['WHEEL_POS'][1] == SETTINGS['WHEELS'][1]['turn']:
         SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
-        if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn']:
-            print("Rotate Left Wheel!")
-            SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
+        SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
+        print("\n[cond_1] Left Wheel Pos: " + str(SETTINGS['WHEEL_POS'][0]))
 
+    else:
+        if SETTINGS['WHEEL_POS'][2] - 1 == SETTINGS['WHEELS'][2]['turn']:
+            # Rotate Middle Wheel
+            SETTINGS['WHEEL_POS'][1] = (SETTINGS['WHEEL_POS'][1] + 1) % 26
+            if SETTINGS['WHEEL_POS'][1] - 1 == SETTINGS['WHEELS'][1]['turn']:
+                # Rotate Left Wheel
+                # print("Rotate Left Wheel!")
+
+                SETTINGS['WHEEL_POS'][0] = (SETTINGS['WHEEL_POS'][0] + 1) % 26
+                print("\n[cond_2] Left Wheel Pos: " + str(SETTINGS['WHEEL_POS'][0]))
+   
+   """
 
     pass
 
 """
 # Enigma Exec Start
-plaintext = input("Plaintext to Encode: ")
+plaintext = input("Plaintext to Encode: ")개
 ukw_select = input("Set Reflector (A, B, C): ")
 wheel_select = input("Set Wheel Sequence L->R (I, II, III): ")
 wheel_pos_select = input("Set Wheel Position L->R (A~Z): ")
@@ -164,7 +201,7 @@ plugboard_setup = input("Plugboard Setup: ")
 """
 
 # Enigma Exec Start
-plaintext = "A"*200
+plaintext = "A"*1000
 ukw_select = "B"
 wheel_select = "III II I"
 wheel_pos_select = "A A A"
