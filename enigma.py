@@ -112,7 +112,7 @@ def pass_wheels(input, reverse=False):
         for i in range(0, len(SETTINGS['WHEELS'])):
             wheel = SETTINGS['WHEELS'][i]
             wheel_pos = SETTINGS['WHEEL_POS'][i]
-            wire = wheel['wire'] # Reverse Mapping 해야함
+            wire = wheel['wire']
 
             if i == 0:
                 match_location = (wheel_pos + (ord(passed_result) - ord('A'))) % 26
@@ -170,7 +170,7 @@ def rotate_wheels():
 
 """
 # Enigma Exec Start
-plaintext = input("Plaintext to Encode: ")개
+plaintext = input("Plaintext to Encode: ")
 ukw_select = input("Set Reflector (A, B, C): ")
 wheel_select = input("Set Wheel Sequence L->R (I, II, III): ")
 wheel_pos_select = input("Set Wheel Position L->R (A~Z): ")
@@ -178,11 +178,11 @@ plugboard_setup = input("Plugboard Setup: ")
 """
 
 # Enigma Exec Start
-plaintext = "A"*1000
+plaintext = "AOIFJOAISFNOWIDHOLSAKMFLWIJODLASINFLWIJDLASKFMOIWHDOQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJNDKAJSDQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJNQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJNQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJNQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJNQKDAASDOIWKDLKAJSNKCJNOIWQHDIUASFKJSNDQUDHIASUDHKWJN"
 ukw_select = "B"
-wheel_select = "III II I"
-wheel_pos_select = "A A A"
-plugboard_setup = "AA"
+wheel_select = "I II III"
+wheel_pos_select = "J E F"
+plugboard_setup = "AB CD"
 
 apply_settings(ukw_select, wheel_select, wheel_pos_select, plugboard_setup)
 
@@ -208,3 +208,4 @@ for ch in plaintext:
         print(encoded_ch, end = "")
     if count % 35 == 0:
         print("")
+        
