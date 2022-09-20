@@ -95,8 +95,10 @@ def pass_wheels(input, reverse=False):
         for i in range(0, len(SETTINGS['WHEELS'])):
             # 가장 오른쪽 Wheel부터 왼쪽 Wheel 방향 순서로 통과하도록 Wheel 설정
             wheel = SETTINGS['WHEELS'][(len(SETTINGS['WHEELS']) - 1)- i]
+            
             # 현재 통과하는 Wheel의 position
             wheel_pos = SETTINGS['WHEEL_POS'][len(SETTINGS['WHEELS']) - 1 - i]
+            
             # 현재 통과하는 Wheel의 wire
             wire = wheel['wire']
 
@@ -107,7 +109,10 @@ def pass_wheels(input, reverse=False):
             else:
                 # 현재 통과중인 Wheel이 가장 오른쪽 Wheel이 아닐 경우, 이전 Wheel의 Position 정보를 이용해 대응되는 index를 계산
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][(len(SETTINGS['WHEELS']) - 1) - i + 1]
+                
+                # 바로 직전에 통과한 이전 Wheel에 대응되는 현재 Wheel에서의 위치 계산
                 match_location = (((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos )
+                
                 if match_location < 0:
                     # 연산 결과가 음수인 경우 26을 더해 음수가 나오지 않도록 함.
                     match_location = match_location + 26
@@ -120,7 +125,7 @@ def pass_wheels(input, reverse=False):
 
 
     elif reverse:
-        # 역방향으로 WHEEL을 PASS 할 경우
+        # 역방향으로 Wheel을 Pass 할 경우
         for i in range(0, len(SETTINGS['WHEELS'])):
             # 가장 왼쪽 WHEEL부터 오른쪽 WHEEL 방향 순서로 통과하도록 wheel 설정
             wheel = SETTINGS['WHEELS'][i]
@@ -136,7 +141,8 @@ def pass_wheels(input, reverse=False):
             else:
                 # 현재 통과중인 Wheel이 가장 오른쪽 Wheel이 아닐 경우, 이전 Wheel의 Position 정보를 이용해 대응되는 index를 계산
                 previous_wheel_pos = SETTINGS['WHEEL_POS'][i-1]                
-                # 대응되는 위치 계산
+                
+                # 바로 직전에 통과한 이전 Wheel에 대응되는 현재 Wheel에서의 위치 계산
                 match_location = ((ord(passed_result) - ord('A')) - previous_wheel_pos) + wheel_pos
 
                 if match_location < 0:
@@ -238,7 +244,5 @@ for ch in plaintext:
     encoded_ch = pass_ukw(encoded_ch)
     encoded_ch = pass_wheels(encoded_ch, reverse=True)
     encoded_ch = pass_etw(encoded_ch, reverse=True)
-
     encoded_ch = pass_plugboard(encoded_ch)
-    
-        
+    print(encoded_ch, end = "")
