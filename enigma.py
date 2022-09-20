@@ -172,7 +172,8 @@ def pass_ukw(input):
 
 def rotate_wheel(opt='r'):
     # 단일 Wheel 회전함수
-    # rotate_wheel()은 단일 Wheel의 회전 기능 자체만을 구현하였음. 
+    # rotate_wheel()에서는 단일 Wheel의 회전 기능 자체만을 구현하였음. 
+    # rotate_wheels() 함수에서 각 Wheel이 돌아가는 조건에 따라 적절하게 호출하여 사용함.
     if opt == 'r':
         # opt 값을 'r' 로 설정할 경우 가장 오른쪽 Wheel 회전
         # SETTING['WHEEL_POS'] 에서 가장 오른쪽 Wheel의 index는 2 이므로 idx=2로 설정
@@ -181,8 +182,8 @@ def rotate_wheel(opt='r'):
     elif opt == 'm':
         # opt 값을 'r' 로 설정할 경우 중간 Wheel 회전
         # SETTING['WHEEL_POS'] 에서 가장 오른쪽 Wheel의 index는 1 이므로 idx=1로 설정
-
         idx = 1
+        
     elif opt == 'l':
         # opt 값을 'l'로 설정할 경우 가장 왼쪽 Wheel 회전
         # SETTING['WHEEL_POS'] 에서 가장 왼쪽 Wheel의 index는 0 이므로 indx=0으로 설정
