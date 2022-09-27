@@ -2,13 +2,6 @@ from ctypes import ArgumentError
 import re
 from bitarray import bitarray, util as ba_util
 
-DEBUG_MODE = False
-
-def dm(msg):
-    if DEBUG_MODE:
-        print("</> ", end=" ")
-        print(msg)
-
 # Initial Permutation (IP)
 IP = [1, 5, 2, 0, 3, 7, 4, 6]
 
@@ -53,9 +46,6 @@ schedule_keys: generate round keys for round function
 returns array of round keys.
 keep in mind that total rounds of S-DES is 2.
 '''
-
-
-#def schedule_keys(key: bitarray) -> list[bitarray]:
 def schedule_keys(key: bitarray):
     round_keys = []
     permuted_key = bitarray()
@@ -90,8 +80,6 @@ def schedule_keys(key: bitarray):
 round: round function
 returns the output of round function
 '''
-
-
 def round(text: bitarray, round_key: bitarray) -> bitarray:
     # implement round function
 
@@ -99,25 +87,13 @@ def round(text: bitarray, round_key: bitarray) -> bitarray:
 
     for i in EP:
         expanded.append(text[i])
-
-    dm("## Expand and Permutate Right Half " + str(text))
-    dm(str(expanded)+"\n")
-
     expanded ^= round_key
-    dm("## XOR on Expanded Right Half")
-    dm(str(expanded)+"\n")
 
     # S0
-    dm("## Split for SBoxes")
     s0_row = expanded[0:4]
-    dm("Left Half:" + str(expanded[0:4]) + " Right Half:" + str(expanded[4:8])+ "\n")
-
-
     s0_sel_row = (s0_row[0] << 1) + s0_row[3]
     s0_sel_col = (s0_row[1] << 1) + s0_row[2]
     s0_result = ba_util.int2ba(S0[s0_sel_row][s0_sel_col], length=2)
-    dm("## S0 Result")
-    dm(str(s0_result)+"\n")
 
     # S1
     s1_row = expanded[4:8]
@@ -125,8 +101,6 @@ def round(text: bitarray, round_key: bitarray) -> bitarray:
     s1_sel_col = (s1_row[1] << 1) + s1_row[2]
 
     s1_result = ba_util.int2ba(S1[s1_sel_row][s1_sel_col], length=2)
-    dm("## S1 Result" )
-    dm(str(s1_result)+"\n")
 
     # Merge S0, S1 result
     pre_perm4 = s0_result + s1_result
@@ -134,8 +108,7 @@ def round(text: bitarray, round_key: bitarray) -> bitarray:
     result = bitarray()
     for i in P4:
         result.append(pre_perm4[i])
-    dm("## Merge and P4 permutation")
-    dm(str(result) + "\n")
+
     return result
 
 
@@ -149,14 +122,13 @@ mode determines that this function do encryption or decryption.
 def sdes(text: bitarray, key: bitarray, mode) -> bitarray:
     # Create round keys using schedule_keys() function and assign them to "round_keys" variable
     round_keys = schedule_keys(key)
-    dm("round_keys: " + str(round_keys)+"\n")
     orders = [0]*len(round_keys)
+
     if mode == MODE_ENCRYPT:
-        dm(">> ENCRYPT MODE <<")
         for i in range(len(orders)):
             orders[i] = i
+
     elif mode == MODE_DECRYPT:
-        dm(">> DECRYPT MODE <<")
         for i in range(len(orders)):
             orders[i] = len(orders)-1-i
 
@@ -165,59 +137,40 @@ def sdes(text: bitarray, key: bitarray, mode) -> bitarray:
     for i in IP:
         initial_permutated_text.append(text[i])
 
-    dm("## Initial permutation of " + str(text))
-    dm(str(initial_permutated_text)+"\n")
-
     # Split text into Left and Right
     left_side = initial_permutated_text[0:4]
     right_side = initial_permutated_text[4:8]
-    dm("## First split")
-    dm("left half:" + str(left_side)+ " right half:" + str(right_side) + "\n")
 
-    """
+    '''
     [Round 1]
     [Round 1] is performed using initail permutated text's left, right side and the first round key.
-    """
-    dm("Round 1 Key: " +  str(round_keys[orders[0]]))
-
+    '''
     round_1_left_side = right_side
     round_1_right_side = left_side ^ round(right_side, round_keys[orders[0]])
-    dm("## XOR with Left Half and P4")
-    dm(str(round_1_right_side)+ "\n")
 
-    """
+    '''
     [Round 2]
     [Round 2] is performed using the result of round 1 and the second round key.
-    """
+    '''
     # L,R switches(SW) are not performed in the last round
     round_2_left_side = round_1_left_side ^ round(round_1_right_side, round_keys[orders[1]])
     round_2_right_side = round_1_right_side
 
-    dm("## Final XOR")
-    dm(str(round_2_left_side) + "\n")
-
     # Merge left and right into one bitarray
     round_2_res = round_2_left_side + round_2_right_side
-    dm("round_2_res: " + str(round_2_res) + "\n")
 
     # Inverse of initial permutation(IP_1) applied to the result of Round 2
     inverse_initial_permutated_text = bitarray()
     for i in IP_1:
         inverse_initial_permutated_text.append(round_2_res[i])
 
-
-    dm("## Final Permutation")
-    dm(str(inverse_initial_permutated_text) + "\n")
     # Assign result to Result Bitarray
     result = inverse_initial_permutated_text
-    #dm("result: " + str(result) + "\n")
-
-
+    
     return result
 
 
 #### DES Sample Program Start
-
 plaintext = input("[*] Input Plaintext in Binary (8bits): ")
 key = input("[*] Input Key in Binary (10bits): ")
 
