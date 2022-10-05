@@ -9,21 +9,24 @@ from threading import Thread
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
-ENCRYPTION_KEY:bytes = b''
+ENCRYPTION_KEY: bytes = b''
 BLOCK_SIZE = 16
 
+
 class Receiver(Thread):
-    def __init__(self, socket:socket):
+    def __init__(self, socket: socket):
         super().__init__()
         self.socket = socket
 
-    def decrypt(self, ciphertext:bytes) -> bytes:
+    def decrypt(self, ciphertext: bytes) -> bytes:
         # place your own implementation of
         # AES-128-ECB decryption with pycryptodome
+        cipher = AES.new(ENCRYPTION_KEY, AES.MODE_ECB)
+        decrypted = cipher.decrypt(ciphertext)
+        plaintext = unpad(decrypted,BLOCK_SIZE)
+        return plaintext
 
-        return b''
-
-    def handle_recv(self, received:bytes):
+    def handle_recv(self, received: bytes):
         try:
             decrypt_result = self.decrypt(received)
             print("Received: " + bytes.decode(decrypt_result, "UTF-8"))
@@ -32,14 +35,18 @@ class Receiver(Thread):
 
     def run(self):
         while True:
-            received:bytes = self.socket.recv(1024)
+            received: bytes = self.socket.recv(1024)
             self.handle_recv(received)
+
 
 def encrypt_message(msg: bytes) -> bytes:
     # place your own implementation of
     # AES-128-ECB encryption with pycryptodome
+    msg_pad = pad(msg,BLOCK_SIZE)
+    cipher = AES.new(ENCRYPTION_KEY,AES.MODE_ECB)
+    ciphertext = cipher.encrypt(msg_pad)
+    return ciphertext
 
-    return b''
 
 client_socket = socket(AddressFamily.AF_INET, SocketKind.SOCK_STREAM)
 client_socket.connect(('127.0.0.1', 24000))
@@ -60,5 +67,5 @@ while True:
 
     payload = encrypt_message(msg_encoded)
     client_socket.send(payload)
-    
+
     print("Me: " + msg)
