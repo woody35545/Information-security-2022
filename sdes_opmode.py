@@ -9,38 +9,38 @@ import re, random
 from bitarray import bitarray, util as ba_util
 
 # Initial Permutation (IP)
-IP = [ 1, 5, 2, 0, 3, 7, 4, 6 ]
+IP = [1, 5, 2, 0, 3, 7, 4, 6]
 
 # Inverse of Initial Permutation (or Final Permutation)
-IP_1 = [ 3, 0, 2, 4, 6, 1, 7, 5]
+IP_1 = [3, 0, 2, 4, 6, 1, 7, 5]
 
 # Expansion (4bits -> 8bits)
-EP = [ 3, 0, 1, 2, 1, 2, 3, 0 ]
+EP = [3, 0, 1, 2, 1, 2, 3, 0]
 
 # SBox (S0)
 S0 = [
-    [ 1, 0, 3, 2 ],
-    [ 3, 2, 1, 0 ],
-    [ 0, 2, 1, 3 ],
-    [ 3, 1, 3, 2 ]
+    [1, 0, 3, 2],
+    [3, 2, 1, 0],
+    [0, 2, 1, 3],
+    [3, 1, 3, 2]
 ]
 
 # SBox (S1)
 S1 = [
-    [ 0, 1, 2, 3 ],
-    [ 2, 0, 1, 3 ],
-    [ 3, 0, 1, 0 ],
-    [ 2, 1, 0, 3 ]
+    [0, 1, 2, 3],
+    [2, 0, 1, 3],
+    [3, 0, 1, 0],
+    [2, 1, 0, 3]
 ]
 
 # Permutation (P4)
-P4 = [ 1, 3, 2, 0 ]
+P4 = [1, 3, 2, 0]
 
 # Permutation (P10)
-P10 = [ 2, 4, 1, 6, 3, 9, 0, 8, 7, 5 ]
+P10 = [2, 4, 1, 6, 3, 9, 0, 8, 7, 5]
 
 # Permutation (P8)
-P8 = [ 5, 2, 6, 3, 7, 4, 9, 8 ]
+P8 = [5, 2, 6, 3, 7, 4, 9, 8]
 
 #### DES Start
 
@@ -52,7 +52,9 @@ schedule_keys: generate round keys for round function
 returns array of round keys.
 keep in mind that total rounds of S-DES is 2.
 '''
-def schedule_keys(key: bitarray) -> list[bitarray]:
+
+
+def schedule_keys(key: bitarray):
     round_keys = []
     permuted_key = bitarray()
 
@@ -80,10 +82,13 @@ def schedule_keys(key: bitarray) -> list[bitarray]:
 
     return round_keys
 
+
 '''
 round: round function
 returns the output of round function
 '''
+
+
 def round(text: bitarray, round_key: bitarray) -> bitarray:
     # implement round function
     expanded = bitarray()
@@ -104,19 +109,22 @@ def round(text: bitarray, round_key: bitarray) -> bitarray:
     s1_result = ba_util.int2ba(S1[s1_sel_row][s1_sel_col], length=2)
 
     pre_perm4 = s0_result + s1_result
-    
+
     result = bitarray()
     for i in P4:
         result.append(pre_perm4[i])
 
     return result
 
+
 '''
 sdes: encrypts/decrypts plaintext or ciphertext.
 mode determines that this function do encryption or decryption.
      MODE_ENCRYPT or MODE_DECRYPT available.
 '''
-def sdes(text: bitarray, key: bitarray, mode) -> bitarray:
+
+
+def sdes(text: bitarray, key: bitarray, mode):
     result = bitarray()
     round_keys = schedule_keys(key)
 
@@ -136,7 +144,7 @@ def sdes(text: bitarray, key: bitarray, mode) -> bitarray:
 
     # switch and do round 2
     r2_result = round(r1_result, round_keys[1]) ^ half_text_right
-    
+
     # do final permutation
     result.clear()
     round_result = r2_result + r1_result
@@ -148,16 +156,71 @@ def sdes(text: bitarray, key: bitarray, mode) -> bitarray:
 
 
 def sdes_encrypt_ecb(text: bitarray, key: bitarray):
-    pass
+    res = bitarray()
+    num_of_blocks = int(len(text) / 8)
+
+    for i in range(num_of_blocks):
+        block = text[i * 8:(i * 8 + 8)]
+        block_encrypted = sdes(block, key, MODE_ENCRYPT)
+
+        for j in range(len(block)):
+            res.append(block_encrypted[j])
+
+    return res
+
 
 def sdes_decrypt_ecb(ciphertext: bitarray, key: bitarray):
-    pass
+    res = bitarray()
+    num_of_blocks = int(len(ciphertext) / 8)
 
-def sdes_encrypt_cbc(text: bitarray, key: bitarray, iv:bitarray):
-    pass
+    for i in range(num_of_blocks):
+        block = ciphertext[i * 8:(i * 8 + 8)]
+        block_decrypted = sdes(block, key, MODE_DECRYPT)
 
-def sdes_decrypt_cbc(ciphertext: bitarray, key: bitarray, iv:bitarray):
-    pass
+        for j in range(len(block)):
+            res.append(block_decrypted[j])
+
+    return res
+
+
+def sdes_encrypt_cbc(text: bitarray, key: bitarray, iv: bitarray):
+    res = bitarray()
+    num_of_blocks = int(len(text) / 8)
+    previous_block_encrypted = bitarray()
+
+    for i in range(num_of_blocks):
+        if i == 0:
+            # if it's first block
+            previous_block_encrypted = iv[0:8]
+
+        current_block = text[i * 8:(i * 8 + 8)]
+        current_block_xor = current_block ^ previous_block_encrypted
+        block_encrypted = sdes(current_block_xor, key, MODE_ENCRYPT)
+        previous_block_encrypted = block_encrypted
+        for j in range(len(current_block)):
+            res.append(block_encrypted[j])
+    return res
+
+
+def sdes_decrypt_cbc(ciphertext: bitarray, key: bitarray, iv: bitarray):
+    res = bitarray()
+    num_of_blocks = int(len(ciphertext) / 8)
+    previous_block_encrypted = bitarray()
+
+    for i in range(num_of_blocks):
+        if i == 0:
+            # if it's first block
+            previous_block_encrypted = iv[0:8]
+
+        current_encrypted_block = ciphertext[i * 8:(i * 8 + 8)]
+        current_block_decrypted = sdes(current_encrypted_block, key, MODE_DECRYPT)
+        current_block_decrypted_xor = current_block_decrypted ^ previous_block_encrypted
+        previous_block_encrypted = current_encrypted_block
+
+        for j in range(len(current_encrypted_block)):
+            res.append(current_block_decrypted_xor[j])
+    return res
+
 
 #### DES Sample Program Start
 
