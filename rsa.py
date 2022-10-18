@@ -23,20 +23,32 @@ def primesInRange(x, y):
 
 def make_keys(p: BigNumber, q: BigNumber):
     # place your own implementation of make_keys
+
+    n = p*q
     # use e = 65537 as if FIPS standard
+    e = 65537
+    isFound = False
+    d=0
+
+    while not isFound:
+        if (d*e) % ((p-1)*(q-1)) == 1:
+            isFound = True
+        else:
+            d += 1
 
     return [e, d, n]
 
 
 def rsa_encrypt(plain: BigNumber, e: BigNumber, n: BigNumber):
     # place your own implementation of rsa_encrypt
-    pass
+    cipher = plain**e % n
+    return cipher
 
 
 def rsa_decrypt(cipher: BigNumber, d: BigNumber, n: BigNumber):
     # place your own implementation of rsa_decrypt
-    pass
-
+    plain = cipher**d % n
+    return plain
 
 primes = primesInRange(100, 1000)
 
