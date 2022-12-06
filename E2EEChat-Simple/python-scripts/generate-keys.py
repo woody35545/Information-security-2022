@@ -14,11 +14,10 @@ rsa = RSA.generate(2048)
 
 # 공개키 export
 pubkey = rsa.public_key().exportKey()
-# export 공개키 저장(생성된 public key를 pubkey.key라는 파일명으로 export)
 
 # 개인키 export
 prikey = rsa.exportKey()
-#
+
 print(encode_base64(secret) + '\n')
 print(encode_base64(pubkey) + '\n')
 print(encode_base64(prikey) + '\n')
